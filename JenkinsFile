@@ -1,0 +1,31 @@
+pipeline {
+    agent any
+
+    tools {
+        maven 'Maven 3.9.9'
+        jdk 'JDK 20'
+    }
+
+    stages {
+        stage('Clean & Build') {
+            steps {
+                sh 'mvn clean test-compile'
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                // Запуск тестов с флагом удаленного запуска в Selenoid
+                sh 'mvn test -DisRemote=true -DremoteUrl=http://localhost:4444/wd/hub'
+            }
+            post {
+                always {
+                    // Генерация Allure отчета после выполнения тестов
+                    allure includeProperties: false,
+                           jdk: '',
+                           results: [["path": "target/allure-results"]]
+                }
+            }
+        }
+    }
+}
